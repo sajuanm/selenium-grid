@@ -3,10 +3,13 @@ from multiprocessing import Process
 from selenium import webdriver
 
 import Helpers
+import hub
+
+BatchSize = 23
 
 
 def func1(_firefox_options, _line):
-    driver = webdriver.Remote(command_executor='http://localhost:4444',
+    driver = webdriver.Remote(command_executor=hub.hub_address,
                               options=_firefox_options)
     driver.delete_all_cookies()
     Helpers.scrap_webpage(driver, _line)
@@ -39,16 +42,16 @@ if __name__ == '__main__':
     size = len(open(filepath).readlines())
 
     init = 0
-    end = 89
+    end = BatchSize
 
-    while 89 <= end <= size:
+    while BatchSize <= end <= size:
         batch(filepath, init, end)
         init = end + 1
         if end == size:
             break
-        elif end + 90 > size:
+        elif end + BatchSize + 1 > size:
             end += size - end
         else:
-            end += 90
+            end += BatchSize + 1
 
     print("--Process time: - %s seconds ---" % (time.time() - start_time))
