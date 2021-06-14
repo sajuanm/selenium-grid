@@ -1,0 +1,146 @@
+version: "3"
+services:
+  selenium-event-bus:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/event-bus:latest
+    container_name: selenium-event-bus
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "5557:5557"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: selenium-event-bus
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: selenium-event-bus
+
+  selenium-sessions:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/selenium-sessions:latest
+    container_name: selenium-sessions
+    ports:
+      - "5556:5556"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: selenium-sessions
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: selenium-sessions
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-session-queue:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/selenium-session-queue:latest
+    container_name: selenium-session-queue
+    ports:
+      - "5559:5559"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: selenium-session-queue
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: selenium-session-queue
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-distributor:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/selenium-distributor:latest
+    container_name: selenium-distributor
+    ports:
+      - "5553:5553"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: selenium-distributor
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: selenium-distributor
+    depends_on:
+      - selenium-event-bus
+      - selenium-sessions
+      - selenium-session-queue
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_SESSIONS_MAP_HOST=selenium-sessions
+      - SE_SESSIONS_MAP_PORT=5556
+      - SE_SESSION_QUEUE_HOST=selenium-session-queue
+      - SE_SESSION_QUEUE_PORT=5559
+
+  selenium-router:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/selenium-router:latest
+    container_name: selenium-router
+    ports:
+      - "4444:4444"
+    logging:
+      driver: awslogs
+      options: 
+        awslogs-group: selenium-router
+        awslogs-region: eu-west-1
+        awslogs-stream-prefix: selenium-router
+    depends_on:
+      - selenium-distributor
+      - selenium-sessions
+      - selenium-session-queue
+    environment:
+      - SE_DISTRIBUTOR_HOST=selenium-distributor
+      - SE_DISTRIBUTOR_PORT=5553
+      - SE_SESSIONS_MAP_HOST=selenium-sessions
+      - SE_SESSIONS_MAP_PORT=5556
+      - SE_SESSION_QUEUE_HOST=selenium-session-queue
+      - SE_SESSION_QUEUE_PORT=5559
+
+  firefox0:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/node-firefox:latest
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=1
+    ports:
+      - "6900:5900"
+
+  firefox1:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/node-firefox:latest
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=1
+    ports:
+      - "6901:5900"
+
+  firefox2:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/node-firefox:latest
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=1
+    ports:
+      - "6902:5900"
+
+  firefox3:
+    image: 355177803162.dkr.ecr.eu-west-1.amazonaws.com/node-firefox:latest
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=1
+    ports:
+      - "6903:5900"
